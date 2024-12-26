@@ -1,0 +1,4 @@
+swarm
+openai
+boto3
+botocore
