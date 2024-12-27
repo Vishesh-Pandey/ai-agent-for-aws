@@ -111,7 +111,7 @@ def run_demo_loop(
     multiple messages, the demo loop will print each message individually.
     """
     client = Swarm(client=ollama_client)
-    print("Starting Ollama Swarm CLI 🐝")
+    print("Starting Ollama Swarm CLI:")
 
     messages = []
     agent = starting_agent
