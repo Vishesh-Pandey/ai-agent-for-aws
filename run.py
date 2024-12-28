@@ -1,4 +1,4 @@
-from agents import userAgent
+from agents import routerAgent
 from openai import OpenAI
 import json
 from swarm import Swarm
@@ -34,7 +34,7 @@ def process_and_print_streaming_response(response):
 
         if "content" in chunk and chunk["content"] is not None:
             if not content and last_sender:
-                print(f"\033[94m{last_sender}:\033[0m", end=" ", flush=True)
+                print(f"{last_sender}:", end=" ", flush=True)
                 last_sender = ""
             print(chunk["content"], end="", flush=True)
             content += chunk["content"]
@@ -45,7 +45,7 @@ def process_and_print_streaming_response(response):
                 name = f["name"]
                 if not name:
                     continue
-                print(f"\033[94m{last_sender}: \033[95m{name}\033[0m()")
+                print(f"{last_sender}: {name}()")
 
         if "delim" in chunk and chunk["delim"] == "end" and content:
             print() 
@@ -72,7 +72,7 @@ def pretty_print_messages(messages) -> None:
             continue
 
         # print agent name in blue
-        print(f"\033[94m{message['sender']}\033[0m:", end=" ")
+        print(f"{message['sender']}:", end=" ")
 
         # print response, if any
         if message["content"]:
@@ -86,7 +86,7 @@ def pretty_print_messages(messages) -> None:
             f = tool_call["function"]
             name, args = f["name"], f["arguments"]
             arg_str = json.dumps(json.loads(args)).replace(":", "=")
-            print(f"\033[95m{name}\033[0m({arg_str[1:-1]})")
+            print(f"{name}({arg_str[1:-1]})")
 
 
 def run_demo_loop(
@@ -117,27 +117,34 @@ def run_demo_loop(
     agent = starting_agent
 
     while True:
-        user_input = input("\033[90mUser\033[0m: ")
-        messages.append({"role": "user", "content": user_input})
 
-        response = client.run(
-            agent=agent,
-            messages=messages,
-            context_variables=context_variables or {},
-            stream=stream,
-            debug=debug,
-        )
+        try:
+            print("-"*30)
+            user_input = input("User: ")
+            print("-"*30)
+            messages.append({"role": "user", "content": user_input})
 
-        print("THE RESPONSE IS : ", response)
+            response = client.run(
+                agent=agent,
+                messages=messages,
+                context_variables=context_variables or {},
+                stream=stream,
+                debug=debug,
+            )
 
-        if stream:
-            response = process_and_print_streaming_response(response)
-        else:
-            pretty_print_messages(response.messages)
+            print("PLEASE WAIT! PROCESSING YOUR INPUT...")
 
-        messages.extend(response.messages)
-        agent = response.agent
+            if stream:
+                response = process_and_print_streaming_response(response)
+            else:
+                pretty_print_messages(response.messages)
 
+            messages.extend(response.messages)
+            agent = response.agent
+
+        except Exception as e:
+            print(f"Something went wrong. Error: {e}")
+            return
 
 if __name__ == "__main__":
-    run_demo_loop(userAgent, stream=True)
+    run_demo_loop(routerAgent, stream=True)
