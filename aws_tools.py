@@ -1,5 +1,6 @@
 import boto3
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
+import os
 
 def launch_ec2_instance(name, image_id, architecture, instance_type, key_pair):
     """
@@ -65,7 +66,6 @@ def launch_ec2_instance(name, image_id, architecture, instance_type, key_pair):
         return {"Error": str(e)}
 
 
-
 def get_ec2_info():
     """
     This function retrieves information about existing EC2 instances.
@@ -111,13 +111,72 @@ def get_ec2_info():
     except Exception as e:
         return f"An error occurred while retrieving EC2 information: {str(e)}"
 
-# # Example usage
-# response = launch_ec2_instance(
-#     name="MyTestInstance",
-#     image_id="ami-01816d07b1128cd2d",  
-#     architecture="x86_64",
-#     instance_type="t2.micro",
-#     key_pair="mykey"  
-# )
 
+def get_available_files_to_upload():
+    try:
+        files = os.listdir('samplefiles')
+        return '\n'.join(files)
+    except Exception as e:
+        return f"An error occurred while retrieving available files: {str(e)}"
+
+
+def upload_file_to_s3(file_name, bucket_name, object_name=None):
+    """
+    Uploads a file to an S3 bucket.
+
+    Parameters
+    ----------
+    file_name : str
+        The name of the file to upload.
+    bucket_name : str
+        The name of the S3 bucket to upload the file to.
+    object_name : str, optional
+        The name of the object in the S3 bucket to store the file as. If not provided, the file_name is used.
+
+    Returns
+    -------
+    str
+        A message indicating the success or failure of the upload operation.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the file is not found.
+    NoCredentialsError
+        If AWS credentials are not available.
+    PartialCredentialsError
+        If incomplete AWS credentials are provided.
+    Exception
+        If any other error occurs during upload.
+    """
+    s3_client = boto3.client('s3')
+
+    file_name = "./samplefiles/" + file_name
+
+    # If the object name is not provided, use the file name
+    if object_name is None:
+        object_name = file_name
+
+    try:
+        # Upload the file
+        s3_client.upload_file(file_name, bucket_name, object_name)
+        return (f"File '{file_name}' uploaded successfully to '{bucket_name}/{object_name}'")
+    except FileNotFoundError:
+        return (f"File '{file_name}' not found.")
+    except NoCredentialsError:
+        return ("Credentials not available.")
+    except PartialCredentialsError:
+        return ("Incomplete credentials provided.")
+    except Exception as e:
+        return (f"Error occurred: {e}")
+
+# # Example usage
+# file_name = "jaguar.webp"
+# bucket_name = "com.visheshpandey"
+# response = upload_file_to_s3(file_name, bucket_name)
 # print(response)
+
+
+# files = get_available_files_to_upload()
+
+# print(files)
