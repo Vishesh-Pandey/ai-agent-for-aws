@@ -158,6 +158,12 @@ def upload_file_to_s3(file_name, bucket_name, object_name=None):
         object_name = file_name
 
     try:
+        # Check if the bucket exists
+        response = s3_client.list_buckets()
+        existing_buckets = [bucket['Name'] for bucket in response['Buckets']]
+        if not bucket_name in existing_buckets:
+            # If the bucket does not exist, create it
+            s3_client.create_bucket(Bucket=bucket_name)
         # Upload the file
         s3_client.upload_file(file_name, bucket_name, object_name)
         return (f"File '{file_name}' uploaded successfully to '{bucket_name}/{object_name}'")
@@ -171,10 +177,10 @@ def upload_file_to_s3(file_name, bucket_name, object_name=None):
         return (f"Error occurred: {e}")
 
 # # Example usage
-# file_name = "jaguar.webp"
-# bucket_name = "com.visheshpandey"
-# response = upload_file_to_s3(file_name, bucket_name)
-# print(response)
+file_name = "jaguar.webp"
+bucket_name = "com.visheshpandey.in"
+response = upload_file_to_s3(file_name, bucket_name)
+print(response)
 
 
 # files = get_available_files_to_upload()
